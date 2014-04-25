@@ -19,12 +19,12 @@ module OneLogin
         request = ""
         request_doc.write(request)
 
-        deflated_request  = Zlib::Deflate.deflate(request, 9)[2..-5]
-        base64_request    = Base64.encode64(deflated_request)
-        encoded_request   = CGI.escape(base64_request)
+        deflated_request = Zlib::Deflate.deflate(request, 9)[2..-5]
+        base64_request = Base64.encode64(deflated_request)
+        encoded_request = CGI.escape(base64_request)
 
-        params_prefix     = (settings.idp_slo_target_url =~ /\?/) ? '&' : '?'
-        request_params    = "#{params_prefix}SAMLRequest=#{encoded_request}"
+        params_prefix = (settings.idp_slo_target_url =~ /\?/) ? '&' : '?'
+        request_params = "#{params_prefix}SAMLRequest=#{encoded_request}"
 
         params.each_pair do |key, value|
           request_params << "&#{key}=#{CGI.escape(value.to_s)}"
@@ -43,13 +43,17 @@ module OneLogin
         root.attributes['IssueInstant'] = time
         root.attributes['Version'] = "2.0"
 
-        if settings.issuer
-          issuer = root.add_element "saml:Issuer", { "xmlns:saml" => "urn:oasis:names:tc:SAML:2.0:assertion" }
+        if settings.assertion_consumer_logout_service_url != nil
+          root.attributes["AssertionConsumerLogoutServiceURL"] = settings.assertion_consumer_logout_service_url
+        end
+
+        if settings.issuer != nil
+          issuer = root.add_element "saml:Issuer", {"xmlns:saml" => "urn:oasis:names:tc:SAML:2.0:assertion"}
           issuer.text = settings.issuer
         end
 
         if settings.name_identifier_value
-          name_id = root.add_element "saml:NameID", { "xmlns:saml" => "urn:oasis:names:tc:SAML:2.0:assertion" }
+          name_id = root.add_element "saml:NameID", {"xmlns:saml" => "urn:oasis:names:tc:SAML:2.0:assertion"}
           name_id.attributes['NameQualifier'] = settings.sp_name_qualifier if settings.sp_name_qualifier
           name_id.attributes['Format'] = settings.name_identifier_format if settings.name_identifier_format
           name_id.text = settings.name_identifier_value
@@ -58,7 +62,7 @@ module OneLogin
         end
 
         if settings.sessionindex
-          sessionindex = root.add_element "samlp:SessionIndex", { "xmlns:samlp" => "urn:oasis:names:tc:SAML:2.0:protocol" }
+          sessionindex = root.add_element "samlp:SessionIndex", {"xmlns:samlp" => "urn:oasis:names:tc:SAML:2.0:protocol"}
           sessionindex.text = settings.sessionindex
         end
 
